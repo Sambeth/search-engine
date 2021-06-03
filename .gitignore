@@ -1,3 +1,6 @@
 *.class
 *.log
 security.json
+secret
+vdl_conf
+.DS_Store

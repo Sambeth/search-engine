@@ -1,33 +1,24 @@
 # Search-Engine
 
 # General set up
-1. Create a `security.json` file in the PWD with the following details
-```
-{
-    "authentication":{
-       "blockUnknown": true,
-       "class":"solr.BasicAuthPlugin",
-       "credentials":{"solr":"IV0EHq1OnNrj6gvRCwvFwTrZ1+z1oBbnQdiVC3otuq0= Ndd7LKvVBAaZIF0QAVi1ekCfAJXr1GGfLtRUXhgrF8c="},
-       "real": "My Solr Users",
-       "forwardCredentials": false
-    },
-    "authorization":{
-       "class":"solr.RuleBasedAuthorizationPlugin",
-       "permissions":[{"name":"security-edit",
-          "role":"admin"}],
-       "user-role":{"solr":"admin"}
-    }
-}
-```
-NOTE: This is only for test and development purposes. The preferred method of authentication in production is to enable ssl
-
-2. Run docker compose
+1. Run docker compose
 ```
 docker compose up --build -d
 ```
 
+# 1. Upload configuration to zookeeper
+```
+docker exec -it solr1 /opt/solr-8.8.2/bin/solr zk upconfig -z zoo1:2181 -n vdl -d /opt/configset/vdl_conf/
+```
 
-# Set basic authentication and authorization
+# 2. Create collection with custom schema
 ```bash
-docker exec -it solr1 /opt/solr-8.8.2/bin/solr zk cp file:/opt/solr-8.8.2/server/solr/security.json zk:/security.json -z zoo1:2181
+docker exec -it solr1 /opt/solr-8.8.2/bin/solr -c vdl -d /opt/vdl_config -n vdl -shards 2 replicationFactor 2 -p 8981 -V
+
+http://localhost:8981/solr/admin/collections?action=CREATE&name=vdl&numShards=6&replicationFactor=3&maxShardsPerNode=-1&collection.configName=vdl&wt=json
+```
+
+# 3. Full Import Database Data
+```
+http://localhost:8981/solr/dih/dataimport?command=full-import&jdbcurl=<jdbc-url>&jdbcuser=<jdbc-user>&jdbcpassword=<jdbc-password>
 ```
